@@ -1,0 +1,38 @@
+Parameters:
+  App:
+    Type: String
+    Description: Your application's name.
+  Env:
+    Type: String
+    Description: The environment name your service, job, or workflow is being deployed to.
+  Name:
+    Type: String
+    Description: The name of the service, job, or workflow being deployed.
+
+Resources:
+  s3BucketAccessPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: 'Grants CRUD access to the drupal S3 bucket'
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: S3ObjectActions
+            Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:PutObject
+              - s3:PutObjectACL
+              - s3:PutObjectTagging
+              - s3:DeleteObject
+              - s3:RestoreObject
+            Resource: !Sub 'arn:aws:s3:::${App}-${Env}-drupal-static-files/*'
+          - Sid: S3ListAction
+            Effect: Allow
+            Action: s3:ListBucket
+            Resource: !Sub 'arn:aws:s3:::${App}-${Env}-drupal-static-files'
+
+Outputs:
+  s3BucketAccessPolicy:
+    Description: "The IAM::ManagedPolicy to attach to the task role"
+    Value: !Ref s3BucketAccessPolicy

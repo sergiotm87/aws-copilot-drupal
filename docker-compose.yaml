@@ -1,0 +1,94 @@
+version: "3.8"
+
+services:
+
+  php:
+    image: kammin/copilot-drupal
+    build:
+      context: ./
+      dockerfile: ./docker-images/drupal/Dockerfile
+    #  target: drupal
+    container_name: drupal.drupal.local
+    expose:
+      - "9000"
+    #volumes:
+    #- type: volume
+    #  source: copilot-drupal-site
+    #- type: bind
+    #  source: ./src
+    #  target: /var/www/html
+    environment:
+      MYSQL_HOST: mysql.drupal.local
+      #S3_ACCESS_KEY: XXXXX
+      #S3_SECRET_KEY: XXXXXXXXXXX
+      S3_BUCKET: backup-drupal-s3fs
+      S3_REGION: eu-west-1
+      S3_BUCKET_BACKUP: backup-drupal-s3fs
+
+  nginx:
+    image: kammin/copilot-nginx
+    build:
+      context: ./
+      dockerfile: ./docker-images/nginx/Dockerfile
+    container_name: nginx.drupal.local
+    ports:
+      - "80:80"
+    #volumes:
+    #- type: volume
+    #  source: copilot-drupal-site
+    #- type: bind
+    #  source: ./src/web
+    #  target: /var/www/html/web
+    environment:
+      COPILOT_APPLICATION_NAME: drupal
+      COPILOT_APP_PROXY: drupal
+      S3_BUCKET: backup-drupal-s3fs
+      S3_REGION: eu-west-1
+
+  db:
+    image: kammin/copilot-mysql
+    build:
+      context: ./
+      dockerfile: ./docker-images/mysql/Dockerfile
+    container_name: mysql.drupal.local
+    expose:
+      - "3306"
+    volumes:
+    - type: volume
+      source: copilot-drupal-db
+      target: /var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: supersecretpassword
+      MYSQL_DATABASE: drupal
+      MYSQL_USER: drupal
+      MYSQL_PASSWORD: password
+
+  drush:
+    image: kammin/copilot-drush
+    build:
+      context: ./
+      dockerfile: ./docker-images/drush/Dockerfile
+    container_name: drush.drupal.local
+
+  #s3:
+  #  image: minio/minio:edge
+  #  container_name: s3.drupal.local
+  #  ports:
+  #    - "9000:9000"
+  #  command: server /data
+  #  volumes:
+  #  - type: volume
+  #    source: copilot-drupal-files
+  #    target: /data
+  #  environment:
+  #    MINIO_ACCESS_KEY: XXXXX
+  #    MINIO_SECRET_KEY: XXXXXXXXXXX
+  #    MINIO_REGION: eu-west-1
+
+volumes:
+  copilot-drupal-db:
+    driver: local
+  #copilot-drupal-site:
+  #  driver: local
+  #copilot-drupal-files:
+  #  driver: local

@@ -1,0 +1,3 @@
+local:
+  root: /opt/drupal/web/web
+  uri: http://default

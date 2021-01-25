@@ -1,0 +1,7 @@
+#!/bin/bash
+
+function process_templates() {
+
+    gomplate -f "/assets/templates/nginx.conf.tmpl" -o "/etc/nginx/nginx.conf"
+
+}

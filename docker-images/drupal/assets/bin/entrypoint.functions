@@ -1,0 +1,34 @@
+#!/bin/bash
+
+function process_templates() {
+
+    gomplate -f "/assets/templates/settings.local.php.tmpl" -o "/var/www/html/web/sites/default/settings.local.php"
+    gomplate -f "/assets/templates/default.settings.php.tmpl" -o "/var/www/html/web/sites/default/settings.php"
+
+}
+
+function db_migrate() {
+
+    # s3 bucket with .sql dumps
+    BUCKET=${S3_BUCKET_BACKUP}
+    # last modified file mysql folder
+    FILE=$(aws s3 ls ${BUCKET}/mysql-backups --recursive | sort | tail -n 1 | awk '{print $4}')
+    # get mysql dump from s3
+    aws s3 cp s3://${BUCKET}/${FILE} ./mysql_dump.sql
+    # import database using drush command and drupal database settings
+    drush @alias.local sql:query --file=${PWD}/mysql_dump.sql --file-delete
+
+}
+
+function db_backup() {
+
+    # s3 bucket with .sql dumps
+    BUCKET=${S3_BUCKET_BACKUP}
+    # new database dump name
+    FILE="drupal_umami_$(date +'%Y%m%d%H%M').sql"
+    # create database dump using drush command and drupal database settings
+    drush @alias.local sql:dump > ${PWD}/${FILE}
+    # export file to s3 bucket
+    aws s3 cp ${PWD}/${FILE} s3://${BUCKET}/mysql-backups/
+
+}
